@@ -40,20 +40,20 @@
 #define ECD_RANGE                   8191
 //电机rmp 变化成 旋转速度的比例
 #define MOTOR_RPM_TO_SPEED          -0.00290888208665721596153948461415f
-#define MOTOR_ECD_TO_ANGLE          0.000021305288720633905968306772076277f
-#define FULL_COUNT                  9.5
+#define MOTOR_ECD_TO_ANGLE          -0.000021305288720633905968306772076277f
+#define FULL_COUNT                  18
 //拨弹速度
-#define TRIGGER_SPEED               4.0f
-#define CONTINUE_TRIGGER_SPEED      4.0f
-#define READY_TRIGGER_SPEED         0.0f
+#define TRIGGER_SPEED               5.0f
+#define CONTINUE_TRIGGER_SPEED      13.0f
+#define READY_TRIGGER_SPEED         5.0f
 
 #define KEY_OFF_JUGUE_TIME          500
 #define SWITCH_TRIGGER_ON           0
 #define SWITCH_TRIGGER_OFF          1
 
 //卡单时间 以及反转时间
-#define BLOCK_TRIGGER_SPEED         100.0f
-#define BLOCK_TIME                  1200
+#define BLOCK_TRIGGER_SPEED         1.0f
+#define BLOCK_TIME                  700
 #define REVERSE_TIME                500
 #define REVERSE_SPEED_LIMIT         13.0f
 
