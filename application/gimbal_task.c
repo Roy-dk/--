@@ -455,10 +455,8 @@ static void gimbal_init(gimbal_control_t *init)
 {
 
   static const fp32 Pitch_speed_pid[3] = {PITCH_SPEED_PID_KP, PITCH_SPEED_PID_KI, PITCH_SPEED_PID_KD};
-	static const fp32 Pitch_curr_pid[3] = {1, 0.05, 0};
-  static const fp32 Yaw_speed_pid[3] = {100, 25, 0};
+  static const fp32 Yaw_speed_pid[3] = {100, 10, 0};
   static const fp32 Yaw_curr_pid[3] = {1, 0.05, 0};
-	
   //电机数据指针获取
   init->gimbal_yaw_motor.gimbal_motor_measure = get_yaw_gimbal_motor_measure_point();
   init->gimbal_pitch_motor.gimbal_motor_measure = get_pitch_gimbal_motor_measure_point();
@@ -480,7 +478,7 @@ static void gimbal_init(gimbal_control_t *init)
   gimbal_PID_init(&init->gimbal_pitch_motor.gimbal_motor_absolute_angle_pid, PITCH_GYRO_ABSOLUTE_PID_MAX_OUT, PITCH_GYRO_ABSOLUTE_PID_MAX_IOUT, PITCH_GYRO_ABSOLUTE_PID_KP, PITCH_GYRO_ABSOLUTE_PID_KI, PITCH_GYRO_ABSOLUTE_PID_KD);
   gimbal_PID_init(&init->gimbal_pitch_motor.gimbal_motor_relative_angle_pid, PITCH_ENCODE_RELATIVE_PID_MAX_OUT, PITCH_ENCODE_RELATIVE_PID_MAX_IOUT, PITCH_ENCODE_RELATIVE_PID_KP, PITCH_ENCODE_RELATIVE_PID_KI, PITCH_ENCODE_RELATIVE_PID_KD);
   PID_init(&init->gimbal_pitch_motor.gimbal_motor_gyro_pid, PID_POSITION, Pitch_speed_pid, PITCH_SPEED_PID_MAX_OUT, PITCH_SPEED_PID_MAX_IOUT);
-	PID_init(&init->gimbal_pitch_motor.gimbal_motor_curr_pid, PID_POSITION, Pitch_curr_pid, 30000, 30000);
+
   //清除所有PID
   gimbal_total_pid_clear(init);
 
@@ -770,18 +768,18 @@ static void gimbal_motor_absolute_angle_control(gimbal_motor_t *gimbal_motor, in
     return;
   }
   //角度环，速度环，电流环串级pid调试
-  static int cnt1 = 0;
-  cnt1++;
-  if ((cnt1 % 10) == 0)
+  static int cnt = 0;
+  cnt++;
+  if ((cnt % 10) == 0)
     gimbal_motor->motor_gyro_set = gimbal_PID_calc(&gimbal_motor->gimbal_motor_absolute_angle_pid, gimbal_motor->absolute_angle, gimbal_motor->absolute_angle_set, gimbal_motor->motor_gyro);
   if (type == TYPE_YAW)
   {
-    static float curr_yaw = 0;
-    if ((cnt1 % 5) == 0)
+    static float curr = 0;
+    if ((cnt % 5) == 0)
     {
-      curr_yaw = PID_calc(&gimbal_motor->gimbal_motor_gyro_pid, gimbal_motor->gimbal_motor_measure->speed_rpm, gimbal_motor->motor_gyro_set);
+      curr = PID_calc(&gimbal_motor->gimbal_motor_gyro_pid, gimbal_motor->gimbal_motor_measure->speed_rpm, gimbal_motor->motor_gyro_set);
     }
-    gimbal_motor->current_set = PID_calc(&gimbal_motor->gimbal_motor_curr_pid, gimbal_motor->gimbal_motor_measure->given_current, curr_yaw);
+    gimbal_motor->current_set = PID_calc(&gimbal_motor->gimbal_motor_curr_pid, gimbal_motor->gimbal_motor_measure->given_current, curr);
   }
   else
   {
@@ -795,7 +793,6 @@ static void gimbal_motor_absolute_angle_control(gimbal_motor_t *gimbal_motor, in
 //int16_t sw = 0;
 static void gimbal_motor_relative_angle_control(gimbal_motor_t *gimbal_motor, int type)
 {
-	static int cnt2 = 0;
   if (gimbal_motor == NULL)
   {
     return;
@@ -804,20 +801,14 @@ static void gimbal_motor_relative_angle_control(gimbal_motor_t *gimbal_motor, in
   //角度环，速度环串级pid调试
   if (type == TYPE_PITCH)
   {
-		static float curr_pitch = 0;
-		if(cnt2 % 10 == 0)
-			gimbal_motor->motor_gyro_set = gimbal_PID_calc(&gimbal_motor->gimbal_motor_relative_angle_pid, gimbal_motor->relative_angle, gimbal_motor->relative_angle_set, gimbal_motor->motor_gyro);
-		if(cnt2 % 5 == 0)
-			curr_pitch = PID_calc(&gimbal_motor->gimbal_motor_gyro_pid, gimbal_motor->gimbal_motor_measure->speed_rpm, gimbal_motor->motor_gyro_set);
-		gimbal_motor->current_set = PID_calc(&gimbal_motor->gimbal_motor_curr_pid, gimbal_motor->gimbal_motor_measure->given_current, curr_pitch);
-
+    gimbal_motor->motor_gyro_set = gimbal_PID_calc(&gimbal_motor->gimbal_motor_relative_angle_pid, gimbal_motor->relative_angle, gimbal_motor->relative_angle_set, gimbal_motor->motor_gyro);
   }
   if (type == TYPE_YAW)
   {
     gimbal_motor->motor_gyro_set = gimbal_PID_calc(&gimbal_motor->gimbal_motor_absolute_angle_pid, gimbal_motor->absolute_angle, gimbal_motor->absolute_angle_set, gimbal_motor->motor_gyro);
   }
 	
-  //gimbal_motor->current_set = PID_calc(&gimbal_motor->gimbal_motor_gyro_pid, gimbal_motor->motor_gyro, gimbal_motor->motor_gyro_set);
+  gimbal_motor->current_set = PID_calc(&gimbal_motor->gimbal_motor_gyro_pid, gimbal_motor->motor_gyro, gimbal_motor->motor_gyro_set);
   
 	//控制值赋值
   gimbal_motor->given_current = (int16_t)(gimbal_motor->current_set);
